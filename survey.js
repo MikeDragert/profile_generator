@@ -23,38 +23,40 @@ const writeParagraph = function(answers) {
               `It's incredible! How do they do that?.  But I have my own superpower.  ${answers.superPower}!!!!!!!`);
 };
 
-const allQuestionsAsked = function(questionNumber) {
-  return questionNumber >= questions.length;
-};
-
-const isAnswerValid = function(answer) {
-  return answer.length > 0;
-};
-
 const saveAnswer = function(propertyName, answer) {
   answers[propertyName] = answer;
 };
 
-const askAndSaveAnswer = function(questionNumber) {
+//NOTE: we cannot ask the next question until the previous one was answered
+// it was suggested this would be simpler in a for loop versus a recursive call
+// but a for loop would ask all the questions at once wwithout waiting, 
+// we would have to implment a machanism to force a wait (until previous question answered)
+//  like if NotValidAnswer (sleep 50 ms, and check again, retry if invalid answer given)
+// using recursion allows us to chain the calls and call the next one from the callback of the previous
+// and keeps it all event driven with callbacks
+const askAndSaveAnswerRecursive = function(questionNumber) {
   if (questionNumber < 0) {
     questionNumber = 0;
   }
-  if (allQuestionsAsked(questionNumber)) {
+  const allQuestionsAsked = (questionNumber >= questions.length);
+  if (allQuestionsAsked) {
     rl.close();
     writeParagraph(answers);
   } else {
-    rl.question(questions[questionNumber].question, (answer) => {
-      if (isAnswerValid(answer)) {
-        saveAnswer(questions[questionNumber].propertyName, answer);
-        askAndSaveAnswer(questionNumber + 1);
+    const theQuestion = questions[questionNumber];
+    rl.question(theQuestion.question, (answer) => {
+      const isAnswerValid = (answer.Length > 0);
+      if (isAnswerValid) {
+        saveAnswer(theQuestion.propertyName, answer);
+        askAndSaveAnswerRecursive(questionNumber + 1);
       } else {
-        askAndSaveAnswer(questionNumber);
+        askAndSaveAnswerRecursive(questionNumber);
       }
     });
   }
 };
 
-askAndSaveAnswer(0);
+askAndSaveAnswerRecursive(0);
 
 
 
